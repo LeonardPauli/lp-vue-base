@@ -1,9 +1,10 @@
 # setup
 
-see ./base-setup
-
-get running:
-	see ./base-setup."get running"
+Self is ./vue-base-setup
+	get running:
+		see ./vue-base-setup."get running"
+	instantiate:
+		see ./vue-base-setup.instantiate
 
 ' TODO:
 	...
