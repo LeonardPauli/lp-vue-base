@@ -8,6 +8,8 @@
 </template>
 
 <style lang="stylus">
+@import './style/base.styl'
+
 #app
 	font-family 'Avenir', Helvetica, Arial, sans-serif
 	-webkit-font-smoothing antialiased
