@@ -1,0 +1,175 @@
+# vue-base-setup-from-scratch
+' LeonardPauli/lp-vue-base
+	Created by Leonard Pauli, 17 apr 2018
+
+see ./base-setup-from-scratch:
+	- npm i -g @vue/cli
+	- name="lp-vue-base"
+	- subname="web
+	- imagename="leonardpauli/docs-app-vue-base"
+
+	subname.init:
+		- export HUSKY_SKIP_INSTALL="true"
+		- vue create -m npm $name && mv $name $subname
+			// (vue-router, stylus, babel, pwa, eslint, unit-jest, e2e-cypress)
+		- rm -rf $subname/.git // monorepo structure
+	subname.add-git-hook-runner-inner: // most alrready done by vue cli
+		- cp $lpdocs/app/misc/git-hook-runner-inner.sh ./$subname/
+
+	container.dev-adjustments:
+		- package-json-script-add '"dev": "npm run install-if-needed && ./node_modules/.bin/vue-cli-service serve"'
+		// avoid optional: see below (about cypress, etc), install these by running: docker-compose exec app npm i
+		' - container/Dockerfile, insert after "... as dev":
+			ARG npm_config_registry
+			ENV npm_config_registry=$npm_config_registry
+			RUN npm i -g @vue/cli
+		- make cypress (used for e2e-testing) optional:
+			' because it downloads and install a pretty huge (300MB?) native build
+				that's not cachable in npm local registry and thereby requires internet access
+			- vimx '/cli-plugin-e2e-cypress\ndd/devDependencies\nO\t"optionalDependencies": {\n\t},\eP$x' package.json
+			- vimx '/RUN npm install\n$a --no-optional\e' container/Dockerfile
+		- expose port:
+			- vimx '/CMD\nOEXPOSE 8080\e' container/Dockerfile
+			- vimx '/app:\no    ports: ["8080:8080"]\e' container/docker-compose.dev.yml
+
+	subname.babel.add: noop // fixed by vue cli
+	subname.src.add: noop
+	dev.local_url: '"https://$(echo "$server_default_local_domains" | cut -d ',' -f 1)"'
+
+- see $lpdocs/app/node/linting.install."to json"
+
+- fix container
+	adjust for this project (prod) + add in nginx-base-example-html5app:
+		- cd container
+		use nginx-base as runtimeBase for dev:
+			- vimx 'OARG runtimeBase=leonardpauli/docs-nginx-base:latest\e' Dockerfile
+			- vimx '/imageWithSha\noFROM $imageWithSha as build-base\e' Dockerfile
+			- { vimx '/imageWithSha as dev\nddO'"$(cat)"'\n\e' Dockerfile; } <<-'EOF'
+				FROM $runtimeBase as dev
+				COPY --from=build-base /usr/local/lib/node_modules /usr/local/lib/node_modules
+				COPY --from=build-base /usr/local/include/node /usr/local/include/node
+				COPY --from=build-base /usr/lib/* /usr/lib/
+				COPY --from=build-base /usr/local/bin/node /usr/local/bin/
+				RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
+				EOF
+		- enable router html5 mode:
+			vimx "/Router({\no  mode: 'history',\e" ../src/router.js
+		use nginx-base as runtimeBase for prod:
+			- vimx '/# runtime\nqai#\ejqv/CMD\n:norm@a\n' Dockerfile
+			- { vimx '/# runtime\n:set paste\nO'"$(cat)"'\n\e' Dockerfile; } <<-'EOF'
+				# target: prod
+				FROM $runtimeBase as prod
+				COPY --from=builder /app/dist /app/dist
+				COPY web/container/nginx /app/nginx
+				VOLUME /data
+				EOF
+			- merge in .env + .env.example from html5app
+				- echo '__RM__' >> ../../.env.example
+				- cat $lpdocs/terminal/nginx/base/examples/html5app/.env.example >> ../../.env.example
+				- vimx '/__RM__\nv/env=\nddd' ../../.env.example
+				- vimx '/server_image=\ndd' ../../.env.example
+				- vimx '/# server_default_local_proxy=\noserver_default_local_proxy=http://0.0.0.0:8080\e' ../../.env.example
+				- repeat for ../../.env
+			- merge in docker-compose from html5app (inc. ssl)
+				...
+			- cp -r $lpdocs/terminal/nginx/base/examples/html5app/nginx ./nginx
+			- hard-link data/ca + add info to instantiate/setup
+				cd data && mkdir ca && ln ../../../../data/ca/* ca/
+
+			// see ../gdca-s
+			' test:
+				// check Dockerfile build context paths
+				// sed -e '/env=.*/env=prod/' -i "" .env; ./start
+				use env=prod + but ssl local
+				./start
+				check "https://vue-base.localhost"
+		// fix nginx-base dev:
+			// fix nginx/sites/init script + test + rebuild image
+			// - use proxy
+			// test: sed -e '/env=.*/env=dev/' -i "" .env; ./start; vi web/src/some-file // hot-reload change on watch
+
+		- cp -r $lpdocs/terminal/nginx/base/examples/html5app/deploy ./
+		- vimx ':%s/server_image/image_name/g\n' deploy
+		- git add . && git commit -m "added from lpdocs/nginx-base-html5app with ssl-manager (+ fixed prod build + containerized dev + native dev with ssl through proxy, added in deploy script), router html5mode"
+
+
+- minor adjustments:
+
+	- add initial loader:
+		- vimx '/id="app"\nf>a<div class="app-init-loader"></div>\e' public/index.html
+		- { vimx '/<\/head>\nO<style>\n'"$(cat <&3)"'\n</style>\e' public/index.html; } 3<<-'EOF'
+				html {background: #fcfcfc}
+				@keyframes app-init-loader-pulsate {
+					0% {transform: scale(0.1); opacity: 0;}
+					50% {opacity: 1;}
+					100% {transform: scale(1.2); opacity: 0;}
+				}
+				#app>.app-init-loader {
+					position: absolute; top: 50%; left: 50%; margin-left: -15px; margin-top: -50px;
+					height: 30px; width: 30px; border-radius: 30px;
+					background:  hsla(0,0%,50%,0.3);
+					animation: app-init-loader-pulsate 1.5s ease-out; animation-iteration-count: infinite; 
+				}
+			EOF
+		- gaa && gc -m "added index.html initial loader"
+
+	- use pug:
+		- npm i -D pug pug-loader
+		- $lpdocs/app/vue."cli utils".vue_file_html_to_pug with src/**/*.vue
+		- vimx ':%s/helloworld/HelloWorld/\n' src/views/Home.vue
+		- gaa && gc -m "added pug + did vue_file_html_to_pug"
+
+
+	- add webpack config modder:
+		- vi vue.config.js: // insert before last }
+			// > vue inspect > output.js
+			configureWebpack: config=> {
+
+				// for debugging without console or breakpoints (??)
+				// Object.keys(config).map(k=> config[k] = 9)
+				// config.a = stylusLoaders
+
+				if (process.env.NODE_ENV === 'production') {
+					// mutate config for production...
+					// return
+				}
+				// mutate for development...
+			},
+
+	- stylus.add nib:
+		- npm i -D nib
+		- vi vue.config.js: // insert before last "}"
+			// add nib to stylus-loader (s)
+			const addStylusNib = config=> {
+				const vueLoaderLoaders = config.module.rules.find(r=> 'a.vue'.match(r.test))
+					.use.find(l=> l.loader=='vue-loader').options.loaders
+				const stylusLoaders = config.module.rules
+					.filter(r=> r.test.toString().match(/\.styl(us)?\$/))
+				const nib = require('nib')
+				;[vueLoaderLoaders.styl, vueLoaderLoaders.stylus, ...stylusLoaders].forEach((_l, i)=> {
+					const l = Array.isArray(_l)? _l: _l.use
+					const {options} = l.find(l=> l.loader=='stylus-loader')
+					// options.use = options.use || []
+					// options.use.push(nib())
+					options.import = options.import || []
+					options.import.push('~nib/lib/nib/index.styl')
+				})
+			}
+		- vi vue.config.js: // insert after "configureWebpack: config=> {"
+			addStylusNib(config)
+		' test:
+			vi src/App.vue, save, then reset it
+				.thing // in template
+				.thing // in style
+					size 50px // nib thing
+					background red
+					absolute top right // nib thing
+	' stylus.convert: // no need
+		- vi *.vue files:
+			<style lang="stylus" scoped>
+			mod using https://www.npmjs.com/package/css-to-stylus-converter
+
+	- use tabs:
+		- for f in src/**/*.vue; do vimx ':%s/  /\t/g' "$f"; done
+
+	- git add . && git commit -m "added stylus.nib + converted to use tabs in stylus code"

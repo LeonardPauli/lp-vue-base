@@ -1,0 +1,63 @@
+# setup
+' LeonardPauli/lp-vue-base
+	Created by Leonard Pauli, 17 apr 2018
+
+Self is ./base-setup // with overrides:
+	prerequisites:
+		- see ./vue-base-setup-from-scratch
+		- base_location="$lpdocs/app/vue/base"
+	get running:
+		fix env:
+			' optional: if data/ca already created, hard-link it // done in instantiate
+				cd data && mkdir ca && ln ../path/to/original/files/data/ca/* ca/
+	start dev:
+		// optional: abort when installing of cypress starts, disconnect internet, and restart, if you want to avoid it (large download for testing)
+		' optional: CA.cert.root.install data/ca.pem // + restart chrome
+	instantiate:
+		...
+
+
+' TODO:
+	- see $lpdocs/app/meta-seo."for vue"
+	- analytics? (load via js, not through script tag?)
+
+' Notes:
+	simpler hotel instead of nginx-base for ssl etc? nah, maybe use custom nginx-base with proxy_pass for local
+
+' prefer router: vi router.js
+	// landing
+	{
+		path: '/',
+		name: 'start',
+		component: Start,
+	},
+	// sub apps
+	// { ...blocksaday (import blocksaday), path: '/blocksaday' },
+	// Deprecated paths kept with redirects
+	// { path: '/some-legacy-path', redirect: '/misc/playground' },
+	{ path: '*', redirect: '/' }, // alt: error page?? though indexed wrongly; -> redirect home, but show not found modal with faulty path + search options
+
+' npm i mobx movue
+	vi main.js:
+		import Movue from 'movue'
+		import * as mobx from 'mobx'
+		Vue.use(Movue, mobx)
+
+' ExampleComponent
+	<template lang="pug">
+	.example-component
+		h1 {{msg}}
+	</template>
+	<script>
+	export default {
+		name: 'HelloWorld',
+		props: {
+			msg: {type: String},
+		},
+	}
+	</script>
+	<style lang="stylus" scoped>
+	.example-component
+		h1
+			color red
+	</style>
