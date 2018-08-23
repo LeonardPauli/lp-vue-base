@@ -1,0 +1,46 @@
+# docs/vue-base-todo
+' LeonardPauli/lp-vue-base
+	Created by Leonard Pauli, 27 may 2018
+
+// lp-vue-base MVP
+	// git init
+	// github create vue-base
+	// git commit
+	// update docs/setup
+	// test local
+	// commit
+	// fix start script + dockerfile etc for dev + prod
+		// vue-base
+			// web: vuecli
+			// fix git-hooks
+			// copy in .editor-config, .sublime-project
+			// add "see docs/admin/{licencing,readme}" to setup.instantiate
+		// fix app/node/using-containers/container
+		// merge node.using-containers with nginx-base-html5app as node.using-containers.html5app-example
+		// integrate node.using-containers.html5app-example to vue-base
+			// update .env
+			// proxy dev-server
+			// use dist instead of public
+		// commit
+	// A oui! on to:
+	// - window automation
+		// add apple script from lpm to run from start + add it to lpd (reusable, somehow)
+		// commit
+	// - language adjustments
+		// setup stylus, pug, babel extra, etc
+		// commit
+	// - doc + instantiate script
+		// add to setup.rim, instantiate.sh
+		// commit
+		// test
+
+' TODO:
+	use CDN + tiny index.html server (with baseurl trick?) server for versioning + simple roll-back script
+		look into CDN options + tiny index.html server scalability (possible to use serverless?)
+		+ bump version script (package.json + npm publish (if enabled), docker build arg + push to registry (if enabled) + git tag (all this probably from ci service?)))
+		+ handle update during existing (eg. top banner: "new version available, [refresh]", if rim.app.version > rim.local.app.version)
+	use S3 w public read + possibly serverless for scheduled script / authenticated cloud functions (eg. shared but constraint-based operation, or data entry time signing, etc) + s3 write sync
+	use gunjs reverse domain name scoped root key? in case of joining global net
+	bake in build version as ARG build_version; CMD echo $build_version > build_version.txt
+	separate nginx reverse proxy server from nginx-base
+	https://jfrog.com/artifactory/
