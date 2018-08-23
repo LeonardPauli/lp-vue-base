@@ -8,7 +8,7 @@
 <script>
 // @ is an alias to /src
 import HelloWorld from '@/components/HelloWorld.vue'
-import UI from '@/components/UI'
+import {UI} from '@leonardpauli/lp-vue-lib'
 
 export default {
 	name: 'Home',
