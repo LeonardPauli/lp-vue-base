@@ -7,8 +7,7 @@
 	// github create vue-base
 	// git commit
 	// update docs/setup
-	// test local
-	// commit
+	// test local + commit
 	// fix start script + dockerfile etc for dev + prod
 		// vue-base
 			// web: vuecli
@@ -24,15 +23,12 @@
 		// commit
 	// A oui! on to:
 	// - window automation
-		// add apple script from lpm to run from start + add it to lpd (reusable, somehow)
-		// commit
+		// add apple script from lpm to run from start + add it to lpd (reusable, somehow) // commit
 	// - language adjustments
-		// setup stylus, pug, babel extra, etc
-		// commit
+		// setup stylus, pug, babel extra, etc // commit
 	// - doc + instantiate script
 		// add to setup.rim, instantiate.sh
-		// commit
-		// test
+		// test + commit
 
 ' TODO:
 	use CDN + tiny index.html server (with baseurl trick?) server for versioning + simple roll-back script
